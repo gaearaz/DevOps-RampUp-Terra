@@ -98,9 +98,9 @@ resource "aws_lb" "ec2-applb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = ["${aws_security_group.server_sg.id}"]
-  subnets            = ["${var.default-subnet2-list-abc[0]}"]
+  subnets            = ["${var.default-subnet2-list-abc[0]}","${var.default-subnet2-list-abc[1]}"]
 
-  enable_deletion_protection = true
+  enable_deletion_protection = false
 
   tags = {
     Name        = "tf-ec2-lb"
@@ -157,13 +157,18 @@ resource "aws_launch_template" "ec2-lt-autoscaling-group" {
   image_id      = "${var.ami}"
   instance_type = "${var.instance-type}"
   # security_groups = ["${aws_security_group.server_sg}"]
+
+  tags = {
+    project     = "${var.proj-tag}"
+    responsible = "${var.resp-tag}"
+  }
 }
 # ----------------------------UI Scaling stage----------------------------
 resource "aws_launch_configuration" "ui_aws_launch" {
   name            = "tf-LC-ui"
   image_id        = "${var.ami}"
   instance_type   = "${var.instance-type}"
-  security_groups = ["${var.instance-type}"]
+  security_groups = ["${var.security-groups[0]}"]
   key_name        = "${var.key-name}"
 
 }
@@ -202,7 +207,7 @@ resource "aws_launch_configuration" "api_aws_launch-ui" {
   name            = "tf-LC-api"
   image_id        = "${var.ami}"
   instance_type   = "${var.instance-type}"
-  security_groups = ["${var.instance-type}"]
+  security_groups = ["${var.security-groups[0]}"]
   key_name        = "${var.key-name}"
 
 }
@@ -246,6 +251,14 @@ resource "aws_db_instance" "rds-mariadb" {
   name              = "movie_db"
   username          = "root"
   password          = "applicationuser"
+  final_snapshot_identifier = "mariadb-moviedb-backup"
+
+
+  tags = {
+    Name        = "tf-rds-ramp-up"
+    project     = "${var.proj-tag}"
+    responsible = "${var.resp-tag}"
+  }
 }
 
 # resource "aws_eip" "ip" {
